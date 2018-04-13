@@ -17,9 +17,9 @@ class Connection(nn.Module):
         self.nu_pre = nu_pre            # LTP Coefficient
         self.nu_post = nu_post          # LTD Coefficient
         self.limit = limit              # Maximal weight value
-        self.latency = max(1, latency)
-        self.plasticity = plasticity
-        self.w = (torch.rand(pre.size, post.size).float() - (1.0 - p)).w.clamp(0.0, 1.0)  # Synaptic weights
+        self.latency = max(1, latency)  # Synaptic latency
+        self.plasticity = plasticity    # Defines if synaptic connection's plasticity enabled
+        self.w = (torch.rand(pre.size, post.size).float() - (1.0 - p)).clamp(0.0, 1.0)  # Synaptic weights
 
         self.traces = [
             torch.FloatTensor(pre.size).zero_() for _ in range(self.latency)
@@ -28,24 +28,25 @@ class Connection(nn.Module):
             torch.FloatTensor(pre.size).zero_() for _ in range(self.latency)
         ]
 
-    def forward(self, pre_spikes, dt):
-        spikes = self.spikes[-1]
-        traces = self.traces[-1]
-        self.spikes = [pre_spikes] + self.spikes[:-1]
-        self.traces = [self.pre.spike_traces] + self.traces[:-1]
+    def forward(self, pre_spikes):
+        spikes = self.spikes[-1]    # Spikes that arrived with latency
+        traces = self.traces[-1]    # Traces of spikes that arrived with latency
 
-        output = (self.w.t() * spikes).sum(1)
-        self.post.v_i_next += output
+        self.spikes = [pre_spikes] + self.spikes[:-1]               # Inserting spikes from presynaptic group to queue
+        self.traces = [self.pre.spike_traces] + self.traces[:-1]    # Inserting traces from presynaptic group to queue
 
-        if self.plasticity:
-            self.update(traces, spikes)
+        output = (self.w.t() * spikes).sum(1)   # Calculating input current for postsynaptic group at this moment
+        self.post.v_i_next += output            # Adding input current from this connection to postsynaptic group
+
+        if self.plasticity:                     # If synaptic plasticity if enabled
+            self.update(traces, spikes)         # Updating weights
 
         return output
 
     def update(self, traces, spikes):
         pre, post = self.pre, self.post
 
-        self.w += self.nu_post * (traces.view(pre.size, 1) * post.spikes.view(1, post.size))
-        self.w -= self.nu_pre * (spikes.view(pre.size, 1) * post.spike_traces.view(1, post.size))
+        self.w += self.nu_post * (traces.view(pre.size, 1) * post.spikes.view(1, post.size))        # LTP
+        self.w -= self.nu_pre * (spikes.view(pre.size, 1) * post.spike_traces.view(1, post.size))   # LTD
         self.w = torch.clamp(self.w, 0, self.limit)
 

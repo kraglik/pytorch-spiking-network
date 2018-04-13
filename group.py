@@ -12,28 +12,35 @@ class InputGroup(nn.Module):
         self.trace_tc = trace_tc
         self.spike_traces = torch.FloatTensor(size).zero_()
 
-    def forward(self, dt=0.5):
+    def forward(self):
         self.v_i = self.v_i.clamp(0, 1).ceil()
 
-        self.trace_tc -= dt * self.trace_tc * self.trace_tc
+        self.trace_tc -= self.trace_tc * self.trace_tc
         self.trace_tc += self.v_i
         self.trace_tc = self.trace_tc.clamp(0, 1)
 
         for connection in self.outputs:
-            connection.forward(self.v_i, dt)
+            connection.forward(self.v_i)
 
 
 class IzhikevichGroup(nn.Module):
-    def __init__(self, name, size, c=-65.0, u=-14.0, a=0.02, b=0.2, d=8.0, threshold=35.0, trace_tc=0.05):
+    """
+    Neuronal group of Izhikevich neurons (Simple Model of Spiking Neurons, Izhikevich, 2003)
+
+            v' = dt * (0.04v^2 + 5v + 140 - u + I)
+            u' = dt * a(bv - u)
+
+    """
+    def __init__(self, name, size, c=-65.0, u=-14.0, a=0.02, b=0.2, d=8.0, threshold=35.0, trace_decay_speed=0.05):
         super(IzhikevichGroup, self).__init__()
         self.name = name
 
         # Internal state of neuronal group
-        self.v = torch.FloatTensor(size).zero_() + c  # Tensor of membrane potentials
-        self.u = torch.FloatTensor(size).zero_() + u  # Tensor of recovery variables
+        self.v = torch.FloatTensor(size).zero_() + c        # Tensor of membrane potentials
+        self.u = torch.FloatTensor(size).zero_() + u        # Tensor of recovery variables
         self.spike_traces = torch.FloatTensor(size).zero_()
         self.spikes = torch.FloatTensor(size).zero_()
-        self.trace_tc = trace_tc
+        self.trace_decay_speed = trace_decay_speed
         self.t = 0.0
 
         # External input
@@ -58,7 +65,6 @@ class IzhikevichGroup(nn.Module):
         v, u, a, b, c, d, v_max = self.v, self.u, self.a, self.b, self.c, self.d, self.threshold
 
         # Calculating new values with time step dt = 0.5 for numerical stability
-        # (Izhikevich, Simple Model of Spiking Neurons, 2003)
         v += 0.5 * ((0.04 * v + 5.0) * v + 140 - u + self.v_i)
         u += 0.5 * a * (b * v - u)
 
@@ -71,14 +77,14 @@ class IzhikevichGroup(nn.Module):
         self.v = v * non_spikes + c * spikes    # Resetting membrane potential of fired neurons
         self.u = u + d * spikes                 # Resetting recovery variable values of fired neurons
 
-        self.spike_traces -= self.trace_tc * self.spike_traces
+        self.spike_traces -= self.trace_decay_speed * self.spike_traces
         self.spike_traces = (self.spike_traces + spikes).clamp(0, 1.0)
         self.spikes = spikes
 
         self.t += 1.0
 
         for connection in self.outputs:
-            connection.forward(spikes, self.t)
+            connection.forward(spikes)
 
         return spikes
 

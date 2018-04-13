@@ -11,8 +11,8 @@ from network import Network
 if __name__ == '__main__':
     net = Network()
 
-    g1 = IzhikevichGroup('group 1', 500, trace_tc=0.05)
-    g2 = IzhikevichGroup('group 2', 500, trace_tc=0.05)
+    g1 = IzhikevichGroup('group 1', 500, trace_decay_speed=0.05)
+    g2 = IzhikevichGroup('group 2', 500, trace_decay_speed=0.05)
 
     g1_to_g1 = Connection(g1, g1, latency=1, p=0.25)
     g2_to_g2 = Connection(g2, g2, latency=1, p=0.25)
