@@ -1,20 +1,17 @@
-import torch
 import torch.nn as nn
 
 
 class Network(nn.Module):
 
-    def __init__(self, dt=1.0):
+    def __init__(self):
         super(Network, self).__init__()
 
         self.groups = dict()
         self.activity_log = dict()
-        self.dt = dt
         self.t = 0.0
 
     def add(self, group):
         self.groups[group.name] = group
-        group.dt = self.dt
 
     def set_observable(self, group: str):
         if group not in self.groups.keys():
@@ -27,14 +24,14 @@ class Network(nn.Module):
                 self.groups[group].v_i += input
 
         for name, group in self.groups.items():
-            spikes = group.forward(self.dt)
+            spikes = group.forward()
             if name in self.activity_log.keys():
                 self.activity_log[name].append(spikes)
 
         for group in self.groups.values():
             group.swap_inputs()
 
-        self.t += self.dt
+        self.t += 1.0
 
     def set_plasticity(self, plasticity):
         for group in self.groups.values():

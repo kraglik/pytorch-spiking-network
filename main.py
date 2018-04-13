@@ -26,7 +26,7 @@ if __name__ == '__main__':
     net.set_observable('group 1')
     net.set_observable('group 2')
 
-    t_max = 1000.0
+    t_max = 2000.0
 
     plt.matshow(g1_to_g1.w.cpu().numpy())
     plt.title('Group 1 recurrent connection initial weights matrix')
@@ -37,16 +37,16 @@ if __name__ == '__main__':
     g1_input = torch.FloatTensor(g1.size).float().zero_()
     g2_input = torch.FloatTensor(g2.size).float().zero_()
 
-    for i in range(5):
+    for i in range(20):
         g2_input[i * 16 + 18] = 25.0
 
-    for i in range(20):
+    for i in range(50):
         g1_input[i * 5] = 25.0
 
     while net.t < t_max / 2:
         inputs = {
-            'group 1': g1_input + torch.rand(g1.size).float() * (random() * 7.0),
-            'group 2': g2_input + torch.rand(g2.size).float() * (random() * 7.0)
+            'group 1': g1_input + torch.rand(g1.size).float() * (random() * 10.0),
+            'group 2': g2_input + torch.rand(g2.size).float() * (random() * 10.0)
         }
         net.step(inputs)
 
@@ -54,7 +54,8 @@ if __name__ == '__main__':
 
     while net.t < t_max:
         inputs = {
-            'group 1': g1_input + torch.rand(g1.size).float() * (random() * 10.0)
+            'group 1': g1_input + torch.rand(g1.size).float() * (random() * 10.0),
+            'group 2': g2_input * 0.1 + torch.rand(g2.size).float() * (random() * 2.0)
         }
         net.step(inputs)
 

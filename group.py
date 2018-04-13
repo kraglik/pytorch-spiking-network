@@ -24,11 +24,11 @@ class InputGroup(nn.Module):
 
 
 class IzhikevichGroup(nn.Module):
-    def __init__(self, name, size, c=-65.0, u=-14.0, a=0.02, b=0.2, d=2.0, threshold=35.0, trace_tc=0.05):
+    def __init__(self, name, size, c=-65.0, u=-14.0, a=0.02, b=0.2, d=8.0, threshold=35.0, trace_tc=0.05):
         super(IzhikevichGroup, self).__init__()
         self.name = name
 
-        # State of neuronal group
+        # Internal state of neuronal group
         self.v = torch.FloatTensor(size).zero_() + c  # Tensor of membrane potentials
         self.u = torch.FloatTensor(size).zero_() + u  # Tensor of recovery variables
         self.spike_traces = torch.FloatTensor(size).zero_()
@@ -36,11 +36,11 @@ class IzhikevichGroup(nn.Module):
         self.trace_tc = trace_tc
         self.t = 0.0
 
-        # Input of neuronal group
+        # External input
         self.v_i = torch.FloatTensor(size).zero_()
         self.v_i_next = torch.FloatTensor(size).zero_()
 
-        # Constant coefficients
+        # Model coefficients
         self.size = size            # Number of neurons in neuronal group
         self.a = a                  # Time scale of the recovery variable
         self.b = b                  # Sensitivity of the recovery variable to the subthreshold fluctuations
@@ -54,25 +54,31 @@ class IzhikevichGroup(nn.Module):
 
         self.plasticity = True
 
-    def forward(self, dt=1.0):
-        for _ in range(int(dt / 0.5)):
-            self.v += dt * (0.04 * (self.v ** 2) + 5.0 * self.v + 140 - self.u + self.v_i)
-            self.u += dt * self.a * (self.b * self.v - self.u)
+    def forward(self):
+        v, u, a, b, c, d, v_max = self.v, self.u, self.a, self.b, self.c, self.d, self.threshold
 
-        spikes = (self.v - self.threshold).clamp(0.0, 1.0).ceil()
+        # Calculating new values with time step dt = 0.5 for numerical stability
+        # (Izhikevich, Simple Model of Spiking Neurons, 2003)
+        v += 0.5 * ((0.04 * v + 5.0) * v + 140 - u + self.v_i)
+        u += 0.5 * a * (b * v - u)
+
+        v += 0.5 * ((0.04 * v + 5.0) * v + 140 - u + self.v_i)
+        u += 0.5 * a * (b * v - u)
+
+        spikes = (v - v_max).clamp(0.0, 1.0).ceil()
         non_spikes = (1.0 - spikes)
 
-        self.v = self.v * non_spikes + self.c * spikes
-        self.u += self.d * spikes
+        self.v = v * non_spikes + c * spikes    # Resetting membrane potential of fired neurons
+        self.u = u + d * spikes                 # Resetting recovery variable values of fired neurons
 
-        self.spike_traces -= dt * self.trace_tc * self.spike_traces
+        self.spike_traces -= self.trace_tc * self.spike_traces
+        self.spike_traces = (self.spike_traces + spikes).clamp(0, 1.0)
         self.spikes = spikes
+
+        self.t += 1.0
 
         for connection in self.outputs:
             connection.forward(spikes, self.t)
-
-        self.t += dt
-        self.spike_traces = (self.spike_traces + spikes).clamp(0, 1.0)
 
         return spikes
 

@@ -49,15 +49,16 @@ class Connection(nn.Module):
 
         output = (self.w.t() * current_spikes).sum(1)
         self.post.v_i_next += output
-        self.update(traces, current_spikes)
+
+        if self.plasticity:
+            self.update(traces, current_spikes)
 
         return output
 
     def update(self, traces, spikes):
-        if self.plasticity:
-            pre, post = self.pre, self.post
+        pre, post = self.pre, self.post
 
-            self.w += self.nu_post * (traces.view(pre.size, 1) * post.spikes.view(1, post.size))
-            self.w -= self.nu_pre * (spikes.view(pre.size, 1) * post.spike_traces.view(1, post.size))
-            self.w = torch.clamp(self.w, 0, self.limit)
+        self.w += self.nu_post * (traces.view(pre.size, 1) * post.spikes.view(1, post.size))
+        self.w -= self.nu_pre * (spikes.view(pre.size, 1) * post.spike_traces.view(1, post.size))
+        self.w = torch.clamp(self.w, 0, self.limit)
 
