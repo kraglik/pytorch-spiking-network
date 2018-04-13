@@ -1,4 +1,5 @@
 import torch.nn as nn
+import pickle
 
 
 class Network(nn.Module):
@@ -36,4 +37,14 @@ class Network(nn.Module):
     def set_plasticity(self, plasticity):
         for group in self.groups.values():
             group.set_plasticity(plasticity)
+
+    @staticmethod
+    def load(path):
+        with open(path, 'rb') as f:
+            net = pickle.load(f)
+        return net
+
+    def save(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)
 

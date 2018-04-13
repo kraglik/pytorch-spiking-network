@@ -32,8 +32,11 @@ class Connection(nn.Module):
         spikes = self.spikes[-1]    # Spikes that arrived with latency
         traces = self.traces[-1]    # Traces of spikes that arrived with latency
 
-        self.spikes = [pre_spikes] + self.spikes[:-1]               # Inserting spikes from presynaptic group to queue
-        self.traces = [self.pre.spike_traces] + self.traces[:-1]    # Inserting traces from presynaptic group to queue
+        self.spikes.pop()
+        self.traces.pop()
+
+        self.spikes = [pre_spikes] + self.spikes               # Inserting spikes from presynaptic group to queue
+        self.traces = [self.pre.spike_traces] + self.traces    # Inserting traces from presynaptic group to queue
 
         output = (self.w.t() * spikes).sum(1)   # Calculating input current for postsynaptic group at this moment
         self.post.v_i_next += output            # Adding input current from this connection to postsynaptic group

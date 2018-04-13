@@ -61,6 +61,8 @@ if __name__ == '__main__':
 
     print('done.')
 
+    net.save('net.pickle')
+
     group_1_activity = torch.stack(net.activity_log['group 1']).cpu().numpy().transpose()
     group_2_activity = torch.stack(net.activity_log['group 2']).cpu().numpy().transpose()
 
@@ -87,4 +89,3 @@ if __name__ == '__main__':
     plt.matshow(g2_to_g2.w.cpu().numpy())
     plt.title('Group 2 recurrent connection weights matrix')
     plt.savefig('plots/g2_to_g2_w.png')
-
