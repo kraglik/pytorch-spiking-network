@@ -12,7 +12,9 @@ After first half of simulation (1 second) synaptic plasticity was disabled and i
 
 Example of synaptic weights changes by STDP rule
 ------------------------------------------------
+Before simulation:
 ![Before](https://github.com/kraglik/pytorch-spiking-network/raw/master/plots/g1_to_g1_w_initial.png "Before simulation")
+After 1s of simulation with enabled plasticity:
 ![After](https://github.com/kraglik/pytorch-spiking-network/raw/master/plots/g1_to_g1_w.png "After 1s of simulation with enabled plasticity")
 
 Example of neuronal activity of Izhikevich neuronal groups with recurrent connections
