@@ -27,8 +27,8 @@ class IzhikevichGroup(nn.Module):
     """
     Neuronal group of Izhikevich neurons (Simple Model of Spiking Neurons, Izhikevich, 2003)
 
-            v' = dt * (0.04v^2 + 5v + 140 - u + I)
-            u' = dt * a(bv - u)
+            v' = 0.04v^2 + 5v + 140 - u + I
+            u' = a(bv - u)
 
     """
     def __init__(self, name, size, c=-65.0, u=-14.0, a=0.02, b=0.2, d=8.0, threshold=35.0, trace_decay_speed=0.05):
