@@ -7,6 +7,10 @@ In this simulator was implemented following:
 Simulation of network of spiking networks with plastic synapses
 ===============================================================
 
+For simulation was created network with 2 groups.
+
+For each group was added recurrent connection with 1ms synaptic delay and connection to other group with 2ms delay.
+
 Network was simulated for 2 seconds of biological time.
 After first half of simulation (1 second) synaptic plasticity was disabled and input current for second group was significantly reduced. 
 
