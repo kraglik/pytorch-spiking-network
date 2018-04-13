@@ -59,8 +59,6 @@ class IzhikevichGroup(nn.Module):
         self.inputs = []
         self.outputs = []
 
-        self.plasticity = True
-
     def forward(self):
         v, u, a, b, c, d, v_max = self.v, self.u, self.a, self.b, self.c, self.d, self.threshold
 
