@@ -7,19 +7,11 @@ class Connection(nn.Module):
     STDP synaptic connection
     """
 
-    def __init__(self,
-                 presynaptic,
-                 postsynaptic,
-                 latency: 1,
-                 p=0.5,
-                 nu_pre=1e-4,
-                 nu_post=1e-2,
-                 limit=1.0,
-                 plasticity=True):
+    def __init__(self, pre, post, latency: 1, p=0.5, nu_pre=1e-4, nu_post=1e-2, limit=1.0, plasticity=True):
         super(Connection, self).__init__()
 
-        self.pre = presynaptic
-        self.post = postsynaptic
+        self.pre = pre
+        self.post = post
         self.pre.outputs.append(self)
         self.post.inputs.append(self)
         self.nu_pre = nu_pre            # LTP Coefficient
@@ -30,15 +22,15 @@ class Connection(nn.Module):
 
         self.plasticity = plasticity
 
-        self.w = torch.rand(presynaptic.size, postsynaptic.size).float()
+        self.w = torch.rand(pre.size, post.size).float()
         self.w -= (1.0 - p)
         self.w = self.w.clamp(0.0, 1.0) * limit
 
         self.traces = [
-            torch.FloatTensor(postsynaptic.size).zero_() for _ in range(self.latency)
+            torch.FloatTensor(pre.size).zero_() for _ in range(self.latency)
         ]
         self.spikes = [
-            torch.FloatTensor(postsynaptic.size).zero_() for _ in range(self.latency)
+            torch.FloatTensor(pre.size).zero_() for _ in range(self.latency)
         ]
 
     def forward(self, spikes, dt):
